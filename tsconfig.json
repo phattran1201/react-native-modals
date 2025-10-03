@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "baseUrl": "./",
+    "declaration": true,
+    "esModuleInterop": true,
+    "jsx": "react-native",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "outDir": "lib/typescript",
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "esnext"
+  },
+  "exclude": ["dist", "node_modules"],
+  "include": ["src/**/*"]
+}

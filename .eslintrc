@@ -1,0 +1,23 @@
+{
+  "ecmaFeatures": {
+    "jsx": true
+  },
+  "env": {
+    "es6": true,
+    "jest": true
+  },
+  "extends": "airbnb",
+  "parser": "babel-eslint",
+  "plugins": ["jsx-a11y", "react"],
+  "rules": {
+    "import/no-extraneous-dependencies": 0,
+    "jsx-a11y/anchor-is-valid": [
+      {
+        "aspects": ["invalidHref"]
+      },
+      "warn"
+    ],
+    "jsx-a11y/href-no-hash": "off",
+    "react/jsx-filename-extension": "off"
+  }
+}
