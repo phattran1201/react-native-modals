@@ -3,6 +3,18 @@
 import { ReactNode } from "react";
 import Animation from "./animations/Animation";
 
+export type StackItem = ModalProps & {
+  key: string;
+  type?: "modal" | "bottomModal";
+  onDismiss?: () => void;
+};
+
+export type EmitModalPortal = {
+  type: "show" | "update" | "dismiss";
+  key?: string;
+  stack: StackItem[];
+};
+
 export type SwipeDirection = "up" | "down" | "left" | "right";
 
 export type DragEvent = {
