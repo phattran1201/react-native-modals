@@ -1,6 +1,6 @@
 {
   "name": "@haroldtran/react-native-modals",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "React Native Modals Library for IOS & Android.",
   "main": "/src/index.tsx",
   "scripts": {
@@ -79,5 +79,9 @@
       "modals-example/node_modules"
     ]
   },
-  "packageManager": "yarn@4.9.2"
+  "packageManager": "yarn@4.9.2",
+  "trustedDependencies": [
+    "core-js",
+    "fsevents"
+  ]
 }

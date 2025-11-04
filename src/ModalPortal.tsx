@@ -134,7 +134,12 @@ class ModalPortal extends React.Component<{}, { stack: StackItem[] }> {
   };
 
   render() {
-    return this.state.stack.map(this.renderModal);
+    return this.state?.stack
+      ?.filter(
+        (item, index, self) =>
+          index === self?.findIndex((t) => t?.key === item?.key),
+      )
+      ?.map(this.renderModal);
   }
 }
 
