@@ -278,7 +278,7 @@ class BaseModal extends Component<ModalProps, State> {
                     ]}
                   >
                     {modalTitle}
-                    {children}
+                    {modalState === MODAL_OPENED && children}
                     {footer}
                   </Animated.View>
                 </Animated.View>
