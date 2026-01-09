@@ -1,6 +1,6 @@
 {
   "name": "@haroldtran/react-native-modals",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "React Native Modals Library for IOS & Android.",
   "main": "/src/index.tsx",
   "scripts": {
@@ -37,6 +37,7 @@
   "license": "MIT",
   "homepage": "https://github.com/phattran1201/react-native-modals",
   "dependencies": {
+    "@sbaiahmed1/react-native-blur": "^4.4.1",
     "babel-plugin-flow-react-proptypes": "^9.1.1",
     "prop-types": "^15.6.0"
   },

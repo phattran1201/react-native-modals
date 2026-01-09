@@ -1,5 +1,6 @@
 // TypeScript types for the library
 
+import { BlurViewProps } from "@sbaiahmed1/react-native-blur";
 import { ReactNode } from "react";
 import Animation from "./animations/Animation";
 
@@ -59,6 +60,8 @@ export type ModalProps = {
   swipeDirection?: SwipeDirection | Array<SwipeDirection>;
   swipeThreshold?: number;
   useNativeDriver?: boolean;
+  useBlurView?: boolean;
+  blurProps?: BlurViewProps;
 };
 
 export type ModalFooterProps = {
@@ -99,4 +102,6 @@ export type BackdropProps = {
   animationDuration?: number;
   pointerEvents?: "auto" | "none" | "box-none" | "box-only";
   useNativeDriver?: boolean;
+  blurProps?: BlurViewProps;
+  useBlurView?: boolean;
 };

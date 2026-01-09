@@ -1,11 +1,5 @@
 import React, { Component, Fragment } from "react";
-import {
-  Animated,
-  BackHandler,
-  Dimensions,
-  StyleSheet,
-  View,
-} from "react-native";
+import { Animated, BackHandler, Dimensions, StyleSheet, View } from "react-native";
 
 import Animation from "../animations/Animation";
 import FadeAnimation from "../animations/FadeAnimation";
@@ -90,6 +84,12 @@ class BaseModal extends Component<ModalProps, State> {
     onSwipeRelease: () => {},
     onSwipingOut: () => {},
     useNativeDriver: true,
+    useBlurView: false,
+    blurProps: {
+      blurType: "extraDark",
+      blurAmount: 20,
+      reducedTransparencyFallbackColor: "#000000",
+    },
   };
 
   constructor(props: ModalProps) {
@@ -142,8 +142,7 @@ class BaseModal extends Component<ModalProps, State> {
   }
 
   get modalSize(): any {
-    const { width: screenWidth, height: screenHeight } =
-      Dimensions.get("window");
+    const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
     let { width, height } = this.props;
     if (width && width > 0.0 && width <= 1.0) {
       width *= screenWidth;
@@ -187,15 +186,11 @@ class BaseModal extends Component<ModalProps, State> {
     if (Math.abs(event.axis.y)) {
       const lastAxis = Math.abs(this.lastSwipeEvent.layout.y);
       const currAxis = Math.abs(event.axis.y);
-      newOpacity =
-        opacity -
-        (opacity * currAxis) / (Dimensions.get("window").height - lastAxis);
+      newOpacity = opacity - (opacity * currAxis) / (Dimensions.get("window").height - lastAxis);
     } else {
       const lastAxis = Math.abs(this.lastSwipeEvent.layout.x);
       const currAxis = Math.abs(event.axis.x);
-      newOpacity =
-        opacity -
-        (opacity * currAxis) / (Dimensions.get("window").width - lastAxis);
+      newOpacity = opacity - (opacity * currAxis) / (Dimensions.get("window").width - lastAxis);
     }
     this.backdrop?.setOpacity(newOpacity);
   };
@@ -225,10 +220,11 @@ class BaseModal extends Component<ModalProps, State> {
       onSwipeOut,
       swipeDirection,
       swipeThreshold,
+      useBlurView,
+      blurProps,
     } = this.props;
 
-    const overlayVisible =
-      hasOverlay && [MODAL_OPENING, MODAL_OPENED].includes(modalState);
+    const overlayVisible = hasOverlay && [MODAL_OPENING, MODAL_OPENED].includes(modalState);
     const round = rounded ? styles.round : null;
     const hidden = modalState === MODAL_CLOSED && styles.hidden;
 
@@ -266,6 +262,8 @@ class BaseModal extends Component<ModalProps, State> {
                   opacity={overlayOpacity}
                   animationDuration={animationDuration}
                   useNativeDriver={useNativeDriver}
+                  useBlurView={useBlurView}
+                  blurProps={blurProps}
                 />
                 <Animated.View style={pan.getLayout()} onLayout={onLayout}>
                   <Animated.View

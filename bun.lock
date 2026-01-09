@@ -4,6 +4,7 @@
     "": {
       "name": "@haroldtran/react-native-modals",
       "dependencies": {
+        "@sbaiahmed1/react-native-blur": "^4.4.1",
         "babel-plugin-flow-react-proptypes": "^9.1.1",
         "prop-types": "^15.6.0",
       },
@@ -178,6 +179,8 @@
     "@react-native/virtualized-lists": ["@react-native/virtualized-lists@0.82.1", "", { "dependencies": { "invariant": "^2.2.4", "nullthrows": "^1.1.1" }, "peerDependencies": { "@types/react": "^19.1.1", "react": "*", "react-native": "*" }, "optionalPeers": ["@types/react"] }, "sha512-f5zpJg9gzh7JtCbsIwV+4kP3eI0QBuA93JGmwFRd4onQ3DnCjV2J5pYqdWtM95sjSKK1dyik59Gj01lLeKqs1Q=="],
 
     "@rtsao/scc": ["@rtsao/scc@1.1.0", "", {}, "sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g=="],
+
+    "@sbaiahmed1/react-native-blur": ["@sbaiahmed1/react-native-blur@4.4.1", "", { "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-skzMbDVE0RLlEA98I04RBG35WTvnnLSavDxlUDG8+/eqaygiHWznrCJC6E77/mHRPVyAyQAE9RN7XrIfOOCmRA=="],
 
     "@sinclair/typebox": ["@sinclair/typebox@0.27.8", "", {}, "sha512-+Fj43pSMwJs4KRrH/938Uf+uAELIgVBmQzg/q1YG10djyfA3TnrU8N8XzqCh/okZdszqBQTZf96idMfE5lnwTA=="],
 
