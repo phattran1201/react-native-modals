@@ -62,6 +62,7 @@ export type ModalProps = {
   useNativeDriver?: boolean;
   useBlurView?: boolean;
   blurProps?: BlurViewProps;
+  isDelay?: boolean;
 };
 
 export type ModalFooterProps = {

@@ -43,11 +43,7 @@ const styles = StyleSheet.create({
   },
 });
 
-type ModalState =
-  | typeof MODAL_OPENING
-  | typeof MODAL_OPENED
-  | typeof MODAL_CLOSING
-  | typeof MODAL_CLOSED;
+type ModalState = typeof MODAL_OPENING | typeof MODAL_OPENED | typeof MODAL_CLOSING | typeof MODAL_CLOSED;
 
 type State = {
   modalAnimation: Animation;
@@ -85,6 +81,7 @@ class BaseModal extends Component<ModalProps, State> {
     onSwipingOut: () => {},
     useNativeDriver: true,
     useBlurView: false,
+    isDelay: false,
     blurProps: {
       blurType: "extraDark",
       blurAmount: 20,
@@ -109,10 +106,7 @@ class BaseModal extends Component<ModalProps, State> {
     if (this.props.visible) {
       this.show();
     }
-    this.backHandler = BackHandler.addEventListener(
-      HARDWARE_BACK_PRESS_EVENT,
-      this.onHardwareBackPress,
-    );
+    this.backHandler = BackHandler.addEventListener(HARDWARE_BACK_PRESS_EVENT, this.onHardwareBackPress);
   }
 
   componentDidUpdate(prevProps: ModalProps) {
@@ -129,8 +123,7 @@ class BaseModal extends Component<ModalProps, State> {
     this.backHandler?.remove();
   }
 
-  onHardwareBackPress = (): boolean =>
-    this.props.onHardwareBackPress ? this.props.onHardwareBackPress() : false;
+  onHardwareBackPress = (): boolean => (this.props.onHardwareBackPress ? this.props.onHardwareBackPress() : false);
 
   get pointerEvents(): "auto" | "none" {
     const { overlayPointerEvents } = this.props;
@@ -222,6 +215,7 @@ class BaseModal extends Component<ModalProps, State> {
       swipeThreshold,
       useBlurView,
       blurProps,
+      isDelay,
     } = this.props;
 
     const overlayVisible = hasOverlay && [MODAL_OPENING, MODAL_OPENED].includes(modalState);
@@ -235,10 +229,7 @@ class BaseModal extends Component<ModalProps, State> {
           hasFooter: Boolean(footer),
         }}
       >
-        <View
-          pointerEvents={this.isSwipingOut ? "none" : "auto"}
-          style={[styles.container, hidden]}
-        >
+        <View pointerEvents={this.isSwipingOut ? "none" : "auto"} style={[styles.container, hidden]}>
           <DraggableView
             style={StyleSheet.flatten([styles.draggableView, style])}
             onMove={this.handleMove}
@@ -266,17 +257,9 @@ class BaseModal extends Component<ModalProps, State> {
                   blurProps={blurProps}
                 />
                 <Animated.View style={pan.getLayout()} onLayout={onLayout}>
-                  <Animated.View
-                    style={[
-                      styles.modal,
-                      round,
-                      this.modalSize,
-                      modalStyle,
-                      modalAnimation.getAnimations(),
-                    ]}
-                  >
+                  <Animated.View style={[styles.modal, round, this.modalSize, modalStyle, modalAnimation.getAnimations()]}>
                     {modalTitle}
-                    {modalState === MODAL_OPENED && children}
+                    {isDelay ? (modalState === MODAL_OPENED ? children : null) : children}
                     {footer}
                   </Animated.View>
                 </Animated.View>

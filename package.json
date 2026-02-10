@@ -1,11 +1,11 @@
 {
   "name": "@haroldtran/react-native-modals",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "React Native Modals Library for IOS & Android.",
   "main": "/src/index.tsx",
   "scripts": {
     "test": "jest",
-    "prebuild": "yarn && tsc --noEmit"
+    "prebuild": "bun install && tsc --noEmit"
   },
   "files": [
     "src"
