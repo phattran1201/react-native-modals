@@ -1,46 +1,63 @@
-import { Animated, Dimensions } from "react-native";
-import Animation from "./Animation";
+import { Animated, Dimensions } from 'react-native';
+import Animation from './Animation';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-export type SlideFrom = "top" | "bottom" | "left" | "right";
+export type SlideFrom = 'top' | 'bottom' | 'left' | 'right';
 
 export default class SlideAnimation extends Animation {
   slideFrom: SlideFrom;
 
-  static SLIDE_FROM_TOP: SlideFrom = "top";
-  static SLIDE_FROM_BOTTOM: SlideFrom = "bottom";
-  static SLIDE_FROM_LEFT: SlideFrom = "left";
-  static SLIDE_FROM_RIGHT: SlideFrom = "right";
+  static SLIDE_FROM_TOP: SlideFrom = 'top';
+  static SLIDE_FROM_BOTTOM: SlideFrom = 'bottom';
+  static SLIDE_FROM_LEFT: SlideFrom = 'left';
+  static SLIDE_FROM_RIGHT: SlideFrom = 'right';
 
   constructor({
     initialValue = 0,
     useNativeDriver = true,
+    animationDuration = 200,
     slideFrom = SlideAnimation.SLIDE_FROM_BOTTOM,
   } = {}) {
-    super({ initialValue, useNativeDriver });
+    super({ initialValue, useNativeDriver, animationDuration });
     this.slideFrom = slideFrom as SlideFrom;
   }
 
-  in(onFinished: Animated.EndCallback = () => {}, options: any = {}): void {
+  in(onFinished: Animated.EndCallback = () => {}, duration?: number): void {
+    const finalDuration = duration || this.animationDuration;
+    if (finalDuration) {
+      Animated.timing(this.animate, {
+        toValue: 1,
+        duration: finalDuration,
+        useNativeDriver: this.useNativeDriver,
+      }).start(onFinished);
+      return;
+    }
     Animated.spring(this.animate, {
       toValue: 1,
       velocity: 0,
       tension: 65,
       friction: 11,
       useNativeDriver: this.useNativeDriver,
-      ...options,
     }).start(onFinished);
   }
 
-  out(onFinished: Animated.EndCallback = () => {}, options: any = {}): void {
+  out(onFinished: Animated.EndCallback = () => {}, duration?: number): void {
+    const finalDuration = duration || this.animationDuration;
+    if (finalDuration) {
+      Animated.timing(this.animate, {
+        toValue: 0,
+        duration: finalDuration,
+        useNativeDriver: this.useNativeDriver,
+      }).start(onFinished);
+      return;
+    }
     Animated.spring(this.animate, {
       toValue: 0,
       velocity: 0,
       tension: 65,
       friction: 11,
       useNativeDriver: this.useNativeDriver,
-      ...options,
     }).start(onFinished);
   }
 

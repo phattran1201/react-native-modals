@@ -1,59 +1,48 @@
-// @flow
+import React, { forwardRef, memo, useEffect, useImperativeHandle, useRef } from 'react';
+import { Animated, StyleSheet, TouchableOpacity } from 'react-native';
+import { BackdropProps } from '../type';
 
-import { BlurView } from "@sbaiahmed1/react-native-blur";
-import React, { Component } from "react";
-import { Animated, StyleSheet, TouchableOpacity } from "react-native";
-import { BackdropProps } from "../type";
+const Backdrop = memo(
+  forwardRef((props: BackdropProps, ref) => {
+    const {
+      backgroundColor = '#000',
+      opacity: toOpacity = 0.5,
+      animationDuration: duration = 200,
+      animationDelay: delay = 0,
+      visible = false,
+      useNativeDriver = true,
+      onPress = () => {},
+      pointerEvents,
+    } = props;
 
-export default class Backdrop extends Component<BackdropProps> {
-  static defaultProps: Partial<BackdropProps> = {
-    backgroundColor: "#000",
-    opacity: 0.5,
-    animationDuration: 200,
-    visible: false,
-    useNativeDriver: true,
-    useBlurView: false,
-    onPress: () => {},
-    blurProps: {
-      blurType: "extraDark",
-      blurAmount: 20,
-      reducedTransparencyFallbackColor: "#000000",
-    },
-  };
+    const opacity = useRef(new Animated.Value(0)).current;
 
-  opacity = new Animated.Value(0);
+    useImperativeHandle(ref, () => ({
+      setOpacity: (value: number) => {
+        opacity.setValue(value);
+      },
+    }));
 
-  componentDidUpdate(prevProps: BackdropProps) {
-    const { visible, useNativeDriver = true, opacity: toOpacity = 0.5, animationDuration: duration = 200 } = this.props;
-    if (prevProps.visible !== visible) {
+    useEffect(() => {
       const toValue = visible ? toOpacity : 0;
-      Animated.timing(this.opacity, {
+      Animated.timing(opacity, {
         toValue,
         duration,
         useNativeDriver,
+        delay: visible ? 0 : delay,
       }).start();
-    }
-  }
+    }, [visible, toOpacity, duration, delay, useNativeDriver]);
 
-  setOpacity = (value: number) => {
-    this.opacity.setValue(value);
-  };
+    const overlayStyle = [StyleSheet.absoluteFill, { backgroundColor, opacity }];
 
-  render() {
-    const { onPress, pointerEvents, backgroundColor, useBlurView, blurProps } = this.props;
-    const { opacity } = this;
-    const overlayStyle: any = [StyleSheet.absoluteFill, { backgroundColor, opacity }];
-    const _children = (
+    return (
       <Animated.View pointerEvents={pointerEvents as any} style={overlayStyle}>
-        <TouchableOpacity onPress={onPress} style={StyleSheet.absoluteFill} />
+        <TouchableOpacity activeOpacity={1} onPress={onPress} style={StyleSheet.absoluteFill} />
       </Animated.View>
     );
-    return useBlurView ? (
-      <BlurView {...blurProps} style={StyleSheet.absoluteFill}>
-        {_children}
-      </BlurView>
-    ) : (
-      _children
-    );
-  }
-}
+  }),
+);
+
+Backdrop.displayName = 'Backdrop';
+
+export default Backdrop;

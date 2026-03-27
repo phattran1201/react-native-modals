@@ -1,8 +1,8 @@
-import React from "react";
-import { DeviceEventEmitter } from "react-native";
-import BaseModal from "./components/BaseModal";
-import BottomModal from "./components/BottomModal";
-import type { EmitModalPortal, ModalProps, StackItem } from "./type";
+import React from 'react';
+import { DeviceEventEmitter } from 'react-native';
+import BaseModal from './components/BaseModal';
+import BottomModal from './components/BottomModal';
+import type { EmitModalPortal, ModalProps, StackItem } from './type';
 
 let modal: ModalPortal | null = null;
 
@@ -23,10 +23,7 @@ class ModalPortal extends React.Component<{}, { stack: StackItem[] }> {
     return modal?.state.stack.length ?? 0;
   }
 
-  static show(
-    children: React.ReactNode,
-    props: ModalProps & { key?: string; type?: "modal" | "bottomModal" } = {},
-  ) {
+  static show(children: React.ReactNode, props: ModalProps & { key?: string; type?: 'modal' | 'bottomModal' } = {}) {
     return modal!.show({ children, ...props, key: props.key });
   }
 
@@ -53,20 +50,16 @@ class ModalPortal extends React.Component<{}, { stack: StackItem[] }> {
 
   getIndex = (key: string) => this.state.stack.findIndex((i) => i.key === key);
 
-  getProps = (
-    props: ModalProps & { key?: string; type?: "modal" | "bottomModal" },
-  ) => {
+  getProps = (props: ModalProps & { key?: string; type?: 'modal' | 'bottomModal' }) => {
     const key = props?.key || this.generateKey();
     return { visible: true, ...props, key } as StackItem;
   };
 
-  show = (
-    props: ModalProps & { key?: string; type?: "modal" | "bottomModal" },
-  ) => {
+  show = (props: ModalProps & { key?: string; type?: 'modal' | 'bottomModal' }) => {
     const mergedProps = this.getProps(props);
     this.setState(({ stack }) => ({ stack: stack.concat(mergedProps) }));
-    DeviceEventEmitter.emit("ModalPortal", {
-      type: "show",
+    DeviceEventEmitter.emit('ModalPortal', {
+      type: 'show',
       key: mergedProps.key,
       stack: this.state.stack,
     } as EmitModalPortal);
@@ -79,8 +72,8 @@ class ModalPortal extends React.Component<{}, { stack: StackItem[] }> {
       const index = this.getIndex(key);
       if (index >= 0) {
         stack[index] = { ...stack[index], ...mergedProps };
-        DeviceEventEmitter.emit("ModalPortal", {
-          type: mergedProps.visible ? "update" : "dismiss",
+        DeviceEventEmitter.emit('ModalPortal', {
+          type: mergedProps.visible ? 'update' : 'dismiss',
           key,
           stack,
         } as EmitModalPortal);
@@ -106,39 +99,21 @@ class ModalPortal extends React.Component<{}, { stack: StackItem[] }> {
     const idx = this.getIndex(key);
     if (idx < 0) return;
     const { onDismiss = () => {} } = this.state.stack[idx];
-    this.setState(
-      ({ stack }) => ({ stack: stack.filter((i) => i.key !== key) }),
-      onDismiss,
-    );
+    this.setState(({ stack }) => ({ stack: stack.filter((i) => i.key !== key) }), onDismiss);
   };
 
   renderModal = (item: StackItem) => {
-    const { type = "modal", key, ...props } = item;
-    if (type === "modal") {
-      return (
-        <BaseModal
-          {...props}
-          key={key}
-          onDismiss={() => this.dismissHandler(key)}
-        />
-      );
-    } else if (type === "bottomModal") {
-      return (
-        <BottomModal
-          {...props}
-          key={key}
-          onDismiss={() => this.dismissHandler(key)}
-        />
-      );
+    const { type = 'modal', key, ...props } = item;
+    if (type === 'modal') {
+      return <BaseModal {...props} key={key} onDismiss={() => this.dismissHandler(key)} />;
+    } else if (type === 'bottomModal') {
+      return <BottomModal {...props} key={key} onDismiss={() => this.dismissHandler(key)} />;
     }
   };
 
   render() {
     return this.state?.stack
-      ?.filter(
-        (item, index, self) =>
-          index === self?.findIndex((t) => t?.key === item?.key),
-      )
+      ?.filter((item, index, self) => index === self?.findIndex((t) => t?.key === item?.key))
       ?.map(this.renderModal);
   }
 }

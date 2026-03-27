@@ -1,11 +1,9 @@
-// @flow
+import React from 'react';
+import { PixelRatio, Platform, StyleSheet, Text, View } from 'react-native';
+import { Positions } from '../constants/Constants';
+import type { ModalTitleProps } from '../type';
 
-import React from "react";
-import { PixelRatio, Platform, StyleSheet, Text, View } from "react-native";
-import { Positions } from "../constants/Constants";
-import type { ModalTitleProps } from "../type";
-
-const isAndroid = Platform.OS === "android";
+const isAndroid = Platform.OS === 'android';
 
 const styles = StyleSheet.create({
   title: {
@@ -16,24 +14,18 @@ const styles = StyleSheet.create({
   },
   titleBar: {
     borderBottomWidth: 1 / PixelRatio.get(),
-    backgroundColor: "#F9F9FB",
-    borderColor: "#DAD9DC",
+    backgroundColor: '#F9F9FB',
+    borderColor: '#DAD9DC',
   },
   text: {
-    fontWeight: isAndroid ? "400" : "500",
-    fontFamily: isAndroid ? "sans-serif-medium" : "System",
+    fontWeight: isAndroid ? '400' : '500',
+    fontFamily: isAndroid ? 'sans-serif-medium' : 'System',
     fontSize: isAndroid ? 19 : 15,
-    color: "#151822",
+    color: '#151822',
   },
 });
 
-const ModalTitle = ({
-  title,
-  style,
-  textStyle,
-  hasTitleBar = true,
-  align = "center",
-}: ModalTitleProps) => {
+const ModalTitle = ({ title, style, textStyle, hasTitleBar = true, align = 'center' }: ModalTitleProps) => {
   const titleBar = hasTitleBar ? styles.titleBar : null;
   const titleAlign = { alignItems: Positions[align as keyof typeof Positions] };
 

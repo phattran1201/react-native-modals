@@ -1,22 +1,19 @@
-// TypeScript types for the library
-
-import { BlurViewProps } from "@sbaiahmed1/react-native-blur";
-import { ReactNode } from "react";
-import Animation from "./animations/Animation";
+import { ReactNode } from 'react';
+import Animation from './animations/Animation';
 
 export type StackItem = ModalProps & {
   key: string;
-  type?: "modal" | "bottomModal";
+  type?: 'modal' | 'bottomModal';
   onDismiss?: () => void;
 };
 
 export type EmitModalPortal = {
-  type: "show" | "update" | "dismiss";
+  type: 'show' | 'update' | 'dismiss';
   key?: string;
   stack: StackItem[];
 };
 
-export type SwipeDirection = "up" | "down" | "left" | "right";
+export type SwipeDirection = 'up' | 'down' | 'left' | 'right';
 
 export type DragEvent = {
   axis: {
@@ -39,14 +36,18 @@ export type ModalProps = {
   height?: number;
   rounded?: boolean;
   hasOverlay?: boolean;
-  overlayPointerEvents?: "auto" | "none";
+  overlayPointerEvents?: 'auto' | 'none';
   overlayBackgroundColor?: string;
   overlayOpacity?: number;
+  overlayAnimationDelay?: number;
+
   modalTitle?: any;
   modalAnimation?: Animation;
   modalStyle?: any;
   style?: any;
   animationDuration?: number;
+  animationDurationIn?: number;
+  animationDurationOut?: number;
   onTouchOutside?: () => void;
   onHardwareBackPress?: () => boolean;
   onShow?: () => void;
@@ -60,8 +61,7 @@ export type ModalProps = {
   swipeDirection?: SwipeDirection | Array<SwipeDirection>;
   swipeThreshold?: number;
   useNativeDriver?: boolean;
-  useBlurView?: boolean;
-  blurProps?: BlurViewProps;
+
   isDelay?: boolean;
 };
 
@@ -74,7 +74,7 @@ export type ModalFooterProps = {
 export type ModalButtonProps = {
   text: string;
   onPress?: () => void;
-  align?: "left" | "right" | "center" | string;
+  align?: 'left' | 'right' | 'center' | string;
   style?: any;
   textStyle?: any;
   disabled?: boolean;
@@ -86,7 +86,7 @@ export type ModalTitleProps = {
   title: any;
   style?: any;
   textStyle?: any;
-  align?: "left" | "right" | "center" | string;
+  align?: 'left' | 'right' | 'center' | string;
   hasTitleBar?: boolean;
 };
 
@@ -101,8 +101,7 @@ export type BackdropProps = {
   onPress?: () => void;
   backgroundColor?: string;
   animationDuration?: number;
-  pointerEvents?: "auto" | "none" | "box-none" | "box-only";
+  animationDelay?: number;
+  pointerEvents?: 'auto' | 'none' | 'box-none' | 'box-only';
   useNativeDriver?: boolean;
-  blurProps?: BlurViewProps;
-  useBlurView?: boolean;
 };

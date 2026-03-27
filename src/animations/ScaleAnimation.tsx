@@ -1,10 +1,17 @@
-// @flow
-
-import { Animated } from "react-native";
-import Animation from "./Animation";
+import { Animated } from 'react-native';
+import Animation from './Animation';
 
 export default class ScaleAnimation extends Animation {
-  in(onFinished: (result?: { finished: boolean }) => void = () => {}): void {
+  in(onFinished: (result?: { finished: boolean }) => void = () => {}, duration?: number): void {
+    const finalDuration = duration || this.animationDuration;
+    if (finalDuration) {
+      Animated.timing(this.animate, {
+        toValue: 1,
+        duration: finalDuration,
+        useNativeDriver: this.useNativeDriver,
+      }).start((result: { finished: boolean }) => onFinished(result));
+      return;
+    }
     Animated.spring(this.animate, {
       toValue: 1,
       velocity: 0,
@@ -14,10 +21,10 @@ export default class ScaleAnimation extends Animation {
     }).start((result: { finished: boolean }) => onFinished(result));
   }
 
-  out(onFinished: (result?: { finished: boolean }) => void = () => {}): void {
+  out(onFinished: (result?: { finished: boolean }) => void = () => {}, duration?: number): void {
     Animated.timing(this.animate, {
       toValue: 0,
-      duration: 200,
+      duration: duration || this.animationDuration,
       useNativeDriver: this.useNativeDriver,
     }).start((result: { finished: boolean }) => onFinished(result));
   }

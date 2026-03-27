@@ -1,9 +1,7 @@
-// @flow
-
 import React from 'react';
 import { StyleSheet } from 'react-native';
-import type { ModalProps } from '../type';
 import SlideAnimation from '../animations/SlideAnimation';
+import type { ModalProps } from '../type';
 import BaseModal from './BaseModal';
 
 const styles = StyleSheet.create({
@@ -16,15 +14,13 @@ const styles = StyleSheet.create({
   },
 });
 
-const BottomModal = ({
-  style,
-  modalStyle,
-  ...restProps
-}: ModalProps) => (
+const BottomModal = ({ style, modalStyle, ...restProps }: ModalProps) => (
   <BaseModal
-    modalAnimation={new SlideAnimation({
-      slideFrom: 'bottom',
-    })}
+    modalAnimation={
+      new SlideAnimation({
+        slideFrom: 'bottom',
+      })
+    }
     {...restProps}
     style={StyleSheet.flatten([styles.container, style])}
     modalStyle={StyleSheet.flatten([styles.modal, modalStyle])}

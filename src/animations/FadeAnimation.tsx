@@ -1,36 +1,26 @@
-// @flow
-
-import { Animated } from "react-native";
-import Animation, { type AnimationConfig } from "./Animation";
+import { Animated } from 'react-native';
+import Animation, { type AnimationConfig } from './Animation';
 
 type FadeAnimationConfig = AnimationConfig & {
   animationDuration?: number;
 };
-
 export default class FadeAnimation extends Animation {
-  animationDuration: number;
-
-  constructor({
-    initialValue = 0,
-    useNativeDriver = false,
-    animationDuration = 200,
-  }: FadeAnimationConfig = {}) {
-    super({ initialValue, useNativeDriver });
-    this.animationDuration = animationDuration;
+  constructor({ initialValue = 0, animationDuration = 200, useNativeDriver = true }: AnimationConfig = {}) {
+    super({ initialValue, useNativeDriver, animationDuration });
   }
 
-  in(onFinished: Function = () => {}): void {
+  in(onFinished: (result?: { finished: boolean }) => void = () => {}, duration?: number): void {
     Animated.timing(this.animate, {
       toValue: 1,
-      duration: this.animationDuration,
+      duration: duration || this.animationDuration,
       useNativeDriver: this.useNativeDriver,
     }).start((result: { finished: boolean }) => onFinished(result));
   }
 
-  out(onFinished: Function = () => {}): void {
+  out(onFinished: (result?: { finished: boolean }) => void = () => {}, duration?: number): void {
     Animated.timing(this.animate, {
       toValue: 0,
-      duration: this.animationDuration,
+      duration: duration || this.animationDuration,
       useNativeDriver: this.useNativeDriver,
     }).start((result: { finished: boolean }) => onFinished(result));
   }

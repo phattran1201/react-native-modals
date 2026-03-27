@@ -1,15 +1,13 @@
-import React from "react";
-import ModalPortal from "./ModalPortal";
-import type { ModalProps } from "./type";
+import React from 'react';
+import ModalPortal from './ModalPortal';
+import type { ModalProps } from './type';
 
 export default class Modal extends React.Component<ModalProps> {
   id: string | null = null;
 
   componentDidMount() {
     if (!ModalPortal.ref) {
-      throw new Error(
-        `Can not use ${this.constructor.name} component until ModalPortal is mounted`,
-      );
+      throw new Error(`Can not use ${this.constructor.name} component until ModalPortal is mounted`);
     }
     if (this.props.visible) {
       this.show();

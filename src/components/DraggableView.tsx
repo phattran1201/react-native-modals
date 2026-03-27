@@ -1,6 +1,6 @@
-import React, { Component } from "react";
-import { Animated, Dimensions, PanResponder } from "react-native";
-import type { DragEvent, SwipeDirection } from "../type";
+import React, { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { Animated, PanResponder, PanResponderGestureState, useWindowDimensions } from 'react-native';
+import type { DragEvent, SwipeDirection } from '../type';
 
 type Props = {
   style?: any;
@@ -11,239 +11,205 @@ type Props = {
   onSwipeOut?: (event: DragEvent) => void;
   swipeThreshold?: number;
   swipeDirection?: SwipeDirection | Array<SwipeDirection>;
-  children: ({
-    onLayout,
-    pan,
-  }: {
-    onLayout: (event: any) => void;
-    pan: Animated.ValueXY;
-  }) => React.ReactNode;
+  children: (args: { onLayout: (event: any) => void; pan: Animated.ValueXY }) => React.ReactNode;
 };
 
-export default class DraggableView extends Component<Props> {
-  static defaultProps = {
-    style: null,
-    onMove: () => {},
-    onSwiping: () => {},
-    onSwipingOut: () => {},
-    onSwipeOut: null,
-    onRelease: () => {},
-    swipeThreshold: 100,
-    swipeDirection: [],
-  };
+const DraggableView = memo((props: Props) => {
+  const {
+    style = null,
+    onMove = () => {},
+    onSwiping = () => {},
+    onSwipingOut = () => {},
+    onSwipeOut = null,
+    onRelease = () => {},
+    swipeThreshold = 100,
+    swipeDirection = [],
+    children: renderContent,
+  } = props;
 
-  // instance properties
-  pan: Animated.ValueXY;
-  allowedDirections: SwipeDirection[];
-  layout: { x: number; y: number; width: number; height: number } | null;
-  panEventListenerId: string | number | null = null;
-  currentSwipeDirection: SwipeDirection | null = null;
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
-  constructor(props: Props) {
-    super(props);
+  const pan = useRef(new Animated.ValueXY()).current;
+  const layoutRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
+  const currentSwipeDirectionRef = useRef<SwipeDirection | null>(null);
 
-    this.pan = new Animated.ValueXY();
-    this.allowedDirections = ([] as SwipeDirection[]).concat(
-      props.swipeDirection || [],
-    );
-    this.layout = null;
-  }
+  // Track pan values without using ._value
+  const propsRef = useRef(props);
+  propsRef.current = props;
 
-  componentDidMount() {
-    this.panEventListenerId = this.pan.addListener(
-      (axis: { x: number; y: number }) => {
-        this.props.onMove?.(this.createDragEvent(axis));
-      },
-    );
-  }
+  const panValueRef = useRef({ x: 0, y: 0 });
 
-  componentWillUnmount() {
-    if (this.panEventListenerId != null) {
-      this.pan.removeListener(this.panEventListenerId as string);
-    }
-  }
+  const allowedDirections = useMemo(
+    () => ([] as SwipeDirection[]).concat(props.swipeDirection || []),
+    [props.swipeDirection],
+  );
 
-  onLayout = (event: any) => {
-    this.layout = event.nativeEvent.layout;
-  };
+  useEffect(() => {
+    const panListenerId = pan.addListener((value) => {
+      panValueRef.current = value;
+      propsRef.current.onMove?.({
+        axis: value,
+        layout: layoutRef.current,
+        swipeDirection: currentSwipeDirectionRef.current,
+      });
+    });
+    return () => pan.removeListener(panListenerId);
+  }, [pan]);
 
-  getSwipeDirection(gestureState: any): SwipeDirection | null {
-    if (this.isValidHorizontalSwipe(gestureState)) {
-      return gestureState.dx > 0 ? "right" : "left";
-    } else if (this.isValidVerticalSwipe(gestureState)) {
-      return gestureState.dy > 0 ? "down" : "up";
-    }
-    return null;
-  }
+  const onLayout = useCallback((event: any) => {
+    layoutRef.current = event.nativeEvent.layout;
+  }, []);
 
-  getDisappearDirection() {
-    const { width, height } = Dimensions.get("window");
-    const vertical = height / 2 + (this.layout ? this.layout.height / 2 : 0);
-    const horizontal = width / 2 + (this.layout ? this.layout.width / 2 : 0);
-    let toValue;
-    if (this.currentSwipeDirection === "up") {
-      toValue = {
-        x: 0,
-        y: -vertical,
-      };
-    } else if (this.currentSwipeDirection === "down") {
-      toValue = {
-        x: 0,
-        y: vertical,
-      };
-    } else if (this.currentSwipeDirection === "left") {
-      toValue = {
-        x: -horizontal,
-        y: 0,
-      };
-    } else if (this.currentSwipeDirection === "right") {
-      toValue = {
-        x: horizontal,
-        y: 0,
-      };
-    }
-    return toValue;
-  }
-
-  isValidHorizontalSwipe({ vx, dy }: any) {
-    return this.isValidSwipe(vx, dy);
-  }
-
-  isValidVerticalSwipe({ vy, dx }: any) {
-    return this.isValidSwipe(vy, dx);
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  isValidSwipe(velocity: number, directionalOffset: number) {
+  const getSwipeDirection = useCallback((gestureState: PanResponderGestureState): SwipeDirection | null => {
+    const { dx, dy, vx, vy } = gestureState;
     const velocityThreshold = 0.3;
     const directionalOffsetThreshold = 80;
-    // eslint-disable-next-line max-len
-    return (
-      Math.abs(velocity) > velocityThreshold &&
-      Math.abs(directionalOffset) < directionalOffsetThreshold
-    );
-  }
 
-  isAllowedDirection({ dy, dx }: any) {
-    const draggedDown = dy > 0;
-    const draggedUp = dy < 0;
-    const draggedLeft = dx < 0;
-    const draggedRight = dx > 0;
-    const isAllowedDirection = (d: SwipeDirection) =>
-      this.currentSwipeDirection === d && this.allowedDirections.includes(d);
-    if (draggedDown && isAllowedDirection("down")) {
-      return true;
-    } else if (draggedUp && isAllowedDirection("up")) {
-      return true;
-    } else if (draggedLeft && isAllowedDirection("left")) {
-      return true;
-    } else if (draggedRight && isAllowedDirection("right")) {
-      return true;
+    if (Math.abs(vx) > velocityThreshold && Math.abs(dy) < directionalOffsetThreshold) {
+      return dx > 0 ? 'right' : 'left';
+    } else if (Math.abs(vy) > velocityThreshold && Math.abs(dx) < directionalOffsetThreshold) {
+      return dy > 0 ? 'down' : 'up';
     }
-    return false;
-  }
+    return null;
+  }, []);
 
-  createDragEvent(axis: { x: number; y: number }): DragEvent {
-    return {
-      axis,
-      layout: this.layout,
-      swipeDirection: this.currentSwipeDirection,
-    };
-  }
+  const getDisappearDirection = useCallback(() => {
+    const vertical = screenHeight / 2 + (layoutRef.current ? layoutRef.current.height / 2 : 0);
+    const horizontal = screenWidth / 2 + (layoutRef.current ? layoutRef.current.width / 2 : 0);
 
-  panResponder = PanResponder.create({
-    onStartShouldSetPanResponder: () => this.allowedDirections.length > 0,
-    onMoveShouldSetPanResponder: (evt, gestureState) =>
-      this.allowedDirections.length > 0 &&
-      (gestureState.dx !== 0 || gestureState.dy !== 0),
-    onPanResponderMove: (event: any, gestureState: any) => {
-      const isVerticalSwipe = (d: SwipeDirection | null) =>
-        ["up", "down"].includes(d as string);
-      const isHorizontalSwipe = (d: SwipeDirection | null) =>
-        ["left", "right"].includes(d as string);
+    switch (currentSwipeDirectionRef.current) {
+      case 'up':
+        return { x: 0, y: -vertical };
+      case 'down':
+        return { x: 0, y: vertical };
+      case 'left':
+        return { x: -horizontal, y: 0 };
+      case 'right':
+        return { x: horizontal, y: 0 };
+      default:
+        return undefined;
+    }
+  }, [screenWidth, screenHeight]);
 
-      const newSwipeDirection = this.getSwipeDirection(gestureState);
-      const isSameDirection =
-        isVerticalSwipe(this.currentSwipeDirection) ===
-          isVerticalSwipe(newSwipeDirection) ||
-        isHorizontalSwipe(this.currentSwipeDirection) ===
-          isHorizontalSwipe(newSwipeDirection);
-      // newDirection & currentSwipeDirection must be same direction
-      if (newSwipeDirection && isSameDirection) {
-        this.currentSwipeDirection = newSwipeDirection;
-      }
-      if (this.isAllowedDirection(gestureState)) {
-        let animEvent: any;
-        if (isVerticalSwipe(this.currentSwipeDirection)) {
-          animEvent = { dy: this.pan.y };
-        } else if (isHorizontalSwipe(this.currentSwipeDirection)) {
-          animEvent = { dx: this.pan.x };
-        }
-        if (animEvent) {
-          Animated.event([null, animEvent], { useNativeDriver: false })(
-            event,
-            gestureState,
-          );
-        }
-        this.props.onSwiping?.(
-          this.createDragEvent({
-            x: (this.pan.x as any)._value,
-            y: (this.pan.y as any)._value,
-          }),
-        );
-      }
+  const isAllowedDirection = useCallback(
+    (gestureState: PanResponderGestureState) => {
+      const { dx, dy } = gestureState;
+      const draggedDown = dy > 0;
+      const draggedUp = dy < 0;
+      const draggedLeft = dx < 0;
+      const draggedRight = dx > 0;
+
+      const isCurrent = (d: SwipeDirection) => currentSwipeDirectionRef.current === d && allowedDirections.includes(d);
+
+      return (
+        (draggedDown && isCurrent('down')) ||
+        (draggedUp && isCurrent('up')) ||
+        (draggedLeft && isCurrent('left')) ||
+        (draggedRight && isCurrent('right'))
+      );
     },
-    onPanResponderRelease: () => {
-      this.pan.flattenOffset();
-      const event = this.createDragEvent({
-        x: (this.pan.x as any)._value,
-        y: (this.pan.y as any)._value,
-      });
-      // on swipe out
-      const threshold = this.props.swipeThreshold ?? 0;
-      if (
-        (this.props.onSwipeOut &&
-          Math.abs((this.pan.y as any)._value) > threshold) ||
-        Math.abs((this.pan.x as any)._value) > threshold
-      ) {
-        const toValue = this.getDisappearDirection();
-        this.props.onSwipingOut?.(event);
-        if (!toValue) return;
-        Animated.spring(this.pan, {
-          toValue,
-          velocity: 0,
-          tension: 65,
-          friction: 11,
-          useNativeDriver: false,
-        }).start(() => {
-          this.props.onSwipeOut?.(event);
-        });
-        return;
-      }
-      // on release
-      this.currentSwipeDirection = null;
-      this.props.onRelease?.(event);
-      Animated.spring(this.pan, {
-        toValue: { x: 0, y: 0 },
-        velocity: 0,
-        tension: 65,
-        friction: 11,
-        useNativeDriver: false,
-      }).start();
-    },
+    [allowedDirections],
+  );
+
+  const createDragEvent = useCallback(
+    (): DragEvent => ({
+      axis: panValueRef.current,
+      layout: layoutRef.current,
+      swipeDirection: currentSwipeDirectionRef.current,
+    }),
+    [],
+  );
+
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () =>
+          propsRef.current.swipeDirection
+            ? ([] as SwipeDirection[]).concat(propsRef.current.swipeDirection).length > 0
+            : false,
+        onMoveShouldSetPanResponder: (_, gestureState) =>
+          (propsRef.current.swipeDirection
+            ? ([] as SwipeDirection[]).concat(propsRef.current.swipeDirection).length > 0
+            : false) &&
+          (gestureState.dx !== 0 || gestureState.dy !== 0),
+        onPanResponderMove: (event, gestureState) => {
+          const isVertical = (d: SwipeDirection | null) => d === 'up' || d === 'down';
+          const isHorizontal = (d: SwipeDirection | null) => d === 'left' || d === 'right';
+
+          const newDir = getSwipeDirection(gestureState);
+          const isSame =
+            isVertical(currentSwipeDirectionRef.current) === isVertical(newDir) ||
+            isHorizontal(currentSwipeDirectionRef.current) === isHorizontal(newDir);
+
+          if (newDir && isSame) {
+            currentSwipeDirectionRef.current = newDir;
+          }
+
+          if (isAllowedDirection(gestureState)) {
+            let animEvent: any;
+            if (isVertical(currentSwipeDirectionRef.current)) {
+              animEvent = { dy: pan.y };
+            } else if (isHorizontal(currentSwipeDirectionRef.current)) {
+              animEvent = { dx: pan.x };
+            }
+
+            if (animEvent) {
+              Animated.event([null, animEvent], { useNativeDriver: false })(event, gestureState);
+            }
+            propsRef.current.onSwiping?.(createDragEvent());
+          }
+        },
+        onPanResponderRelease: () => {
+          pan.flattenOffset();
+          const event = createDragEvent();
+          const threshold = propsRef.current.swipeThreshold ?? 0;
+
+          if (
+            (propsRef.current.onSwipeOut && Math.abs(panValueRef.current.y) > threshold) ||
+            Math.abs(panValueRef.current.x) > threshold
+          ) {
+            const toValue = getDisappearDirection();
+            propsRef.current.onSwipingOut?.(event);
+            if (!toValue) return;
+
+            Animated.spring(pan, {
+              toValue,
+              velocity: 0,
+              tension: 65,
+              friction: 11,
+              useNativeDriver: false,
+            }).start(() => {
+              propsRef.current.onSwipeOut?.(event);
+            });
+            return;
+          }
+
+          currentSwipeDirectionRef.current = null;
+          propsRef.current.onRelease?.(event);
+          Animated.spring(pan, {
+            toValue: { x: 0, y: 0 },
+            velocity: 0,
+            tension: 65,
+            friction: 11,
+            useNativeDriver: false,
+          }).start();
+        },
+      }),
+    [getSwipeDirection, isAllowedDirection, pan, createDragEvent, getDisappearDirection],
+  );
+
+  const content = renderContent({
+    pan,
+    onLayout,
   });
 
-  render() {
-    const { style, children: renderContent } = this.props;
-    const content = renderContent({
-      pan: this.pan,
-      onLayout: this.onLayout,
-    });
+  return (
+    <Animated.View {...panResponder.panHandlers} style={style}>
+      {content}
+    </Animated.View>
+  );
+});
 
-    return (
-      <Animated.View {...this.panResponder.panHandlers} style={style}>
-        {content}
-      </Animated.View>
-    );
-  }
-}
+DraggableView.displayName = 'DraggableView';
+
+export default DraggableView;

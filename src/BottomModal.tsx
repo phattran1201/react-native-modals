@@ -1,7 +1,5 @@
-// @flow
-
-import ModalPortal from './ModalPortal';
 import Modal from './Modal';
+import ModalPortal from './ModalPortal';
 
 class BottomModal extends Modal {
   show() {

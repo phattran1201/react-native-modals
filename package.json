@@ -1,26 +1,7 @@
 {
   "name": "@haroldtran/react-native-modals",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "React Native Modals Library for IOS & Android.",
-  "main": "/src/index.tsx",
-  "scripts": {
-    "test": "jest",
-    "prebuild": "bun install && tsc --noEmit"
-  },
-  "files": [
-    "src"
-  ],
-  "exports": {
-    ".": "./src/index.tsx",
-    "./package.json": "./package.json"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/phattran1201/react-native-modals.git"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
   "keywords": [
     "modal",
     "dialog",
@@ -33,56 +14,51 @@
     "haroldtran",
     "phattran1201"
   ],
-  "author": "Harold Tran <phattran1201@gmail.com> (https://github.com/phattran1201)",
-  "license": "MIT",
   "homepage": "https://github.com/phattran1201/react-native-modals",
-  "dependencies": {
-    "@sbaiahmed1/react-native-blur": "^4.4.1",
-    "babel-plugin-flow-react-proptypes": "^9.1.1",
-    "prop-types": "^15.6.0"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/phattran1201/react-native-modals.git"
+  },
+  "license": "MIT",
+  "author": "Harold Tran <phattran1201@gmail.com> (https://github.com/phattran1201)",
+  "exports": {
+    ".": "./src/index.tsx",
+    "./package.json": "./package.json"
+  },
+  "main": "src/index.tsx",
+  "types": "src/index.tsx",
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "format": "prettier --write \"src/**/*.{ts,tsx}\"",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
+    "publish": "npm publish",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "tsc": "tsc --noEmit"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@babel/core": "^7.29.0",
+    "@babel/preset-env": "^7.29.2",
+    "@babel/preset-typescript": "^7.28.5",
+    "@react-native/babel-preset": "^0.84.1",
+    "@react-native/eslint-config": "^0.84.1",
+    "@types/react": "^19.2.14",
+    "@types/react-native": "^0.73.0",
+    "eslint": "^10.1.0",
+    "prettier": "^3.8.1",
+    "react": "^18.0.0",
+    "react-native": ">=0.74.0",
+    "typescript": "^6.0.2"
   },
   "peerDependencies": {
     "react": "*",
     "react-native": "*"
   },
-  "devDependencies": {
-    "@types/react": "^19.2.0",
-    "@types/react-native": "^0.73.0",
-    "babel-cli": "^6.26.0",
-    "babel-core": "^6.26.3",
-    "babel-eslint": "^8.0.2",
-    "babel-jest": "^23.0.1",
-    "babel-preset-react-native": "^4.0.0",
-    "enzyme": "^3.10.0",
-    "enzyme-adapter-react-16": "^1.14.0",
-    "eslint": "^4.11.0",
-    "eslint-config-airbnb": "^16.1.0",
-    "eslint-plugin-import": "^2.8.0",
-    "eslint-plugin-jest": "^21.17.0",
-    "eslint-plugin-jsx-a11y": "^6.0.2",
-    "eslint-plugin-react": "^7.5.1",
-    "flow-bin": "^0.59.0",
-    "jest": "^22.0.0",
-    "jest-enzyme": "^7.1.0",
-    "react": "^16.0.0",
-    "react-dom": "^16.0.0",
-    "react-native": ">=0.79.0",
-    "react-native-mock-render": "^0.0.26",
-    "rimraf": "^2.6.2"
-  },
-  "jest": {
-    "setupTestFrameworkScriptFile": "./node_modules/jest-enzyme/lib/index.js",
-    "setupFiles": [
-      "./__tests__/setup-tests.js"
-    ],
-    "testRegex": "__tests__/.+\\.test.js$",
-    "modulePathIgnorePatterns": [
-      "modals-example/node_modules"
-    ]
-  },
   "packageManager": "yarn@4.9.2",
-  "trustedDependencies": [
-    "core-js",
-    "fsevents"
-  ]
+  "publishConfig": {
+    "access": "public"
+  }
 }

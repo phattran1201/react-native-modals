@@ -1,9 +1,7 @@
-// @flow
-
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import ModalContext from './ModalContext';
+import { StyleSheet, View } from 'react-native';
 import type { ModalContentProps } from '../type';
+import ModalContext from './ModalContext';
 
 const styles = StyleSheet.create({
   content: {
@@ -15,16 +13,9 @@ const styles = StyleSheet.create({
   },
 });
 
-const ModalContent = ({
-  style,
-  children,
-}: ModalContentProps) => (
+const ModalContent = ({ style, children }: ModalContentProps) => (
   <ModalContext.Consumer>
-    {({ hasTitle }) => (
-      <View style={[styles.content, hasTitle && styles.noPaddingTop, style]}>
-        {children}
-      </View>
-    )}
+    {({ hasTitle }) => <View style={[styles.content, hasTitle && styles.noPaddingTop, style]}>{children}</View>}
   </ModalContext.Consumer>
 );
 

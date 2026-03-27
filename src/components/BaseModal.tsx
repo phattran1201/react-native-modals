@@ -1,31 +1,39 @@
-import React, { Component, Fragment } from "react";
-import { Animated, BackHandler, Dimensions, StyleSheet, View } from "react-native";
+import React, {
+  forwardRef,
+  Fragment,
+  memo,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { Animated, BackHandler, StyleSheet, useWindowDimensions, View } from 'react-native';
 
-import Animation from "../animations/Animation";
-import FadeAnimation from "../animations/FadeAnimation";
-import type { ModalProps } from "../type";
-import Backdrop from "./Backdrop";
-import DraggableView from "./DraggableView";
-import ModalContext from "./ModalContext";
+import FadeAnimation from '../animations/FadeAnimation';
+import type { ModalProps } from '../type';
+import Backdrop from './Backdrop';
+import DraggableView from './DraggableView';
+import ModalContext from './ModalContext';
 
-const HARDWARE_BACK_PRESS_EVENT = "hardwareBackPress" as const;
+const HARDWARE_BACK_PRESS_EVENT = 'hardwareBackPress' as const;
 
 // dialog states
-const MODAL_OPENING: string = "opening";
-const MODAL_OPENED: string = "opened";
-const MODAL_CLOSING: string = "closing";
-const MODAL_CLOSED: string = "closed";
+const MODAL_OPENING = 'opening' as const;
+const MODAL_OPENED = 'opened' as const;
+const MODAL_CLOSING = 'closing' as const;
+const MODAL_CLOSED = 'closed' as const;
 
-// default dialog config
-const DEFAULT_ANIMATION_DURATION: number = 150;
+const DEFAULT_ANIMATION_DURATION = 150;
 
 const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
   },
   modal: {
-    overflow: "hidden",
-    backgroundColor: "#ffffff",
+    overflow: 'hidden',
+    backgroundColor: '#ffffff',
   },
   hidden: {
     top: -10000,
@@ -38,238 +46,258 @@ const styles = StyleSheet.create({
   },
   draggableView: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 
 type ModalState = typeof MODAL_OPENING | typeof MODAL_OPENED | typeof MODAL_CLOSING | typeof MODAL_CLOSED;
 
-type State = {
-  modalAnimation: Animation;
-  modalState: ModalState;
-};
-
-class BaseModal extends Component<ModalProps, State> {
-  // internal refs / stateful properties
-  backHandler: any;
-  lastSwipeEvent: any | null = null;
-  isSwipingOut: boolean = false;
-  backdrop: any;
-
-  static defaultProps = {
-    rounded: true,
-    modalTitle: null,
-    visible: false,
-    style: null,
-    animationDuration: DEFAULT_ANIMATION_DURATION,
-    modalStyle: null,
-    width: null,
-    height: null,
-    onTouchOutside: () => {},
-    onHardwareBackPress: () => false,
-    hasOverlay: true,
-    overlayOpacity: 0.5,
-    overlayPointerEvents: null,
-    overlayBackgroundColor: "#000",
-    onShow: () => {},
-    onDismiss: () => {},
-    footer: null,
-    onMove: () => {},
-    onSwiping: () => {},
-    onSwipeRelease: () => {},
-    onSwipingOut: () => {},
-    useNativeDriver: true,
-    useBlurView: false,
-    isDelay: false,
-    blurProps: {
-      blurType: "extraDark",
-      blurAmount: 20,
-      reducedTransparencyFallbackColor: "#000000",
-    },
-  };
-
-  constructor(props: ModalProps) {
-    super(props);
-
-    this.state = {
-      modalAnimation:
-        props.modalAnimation ||
-        new FadeAnimation({
-          animationDuration: props.animationDuration,
-        }),
-      modalState: MODAL_CLOSED,
-    };
-  }
-
-  componentDidMount() {
-    if (this.props.visible) {
-      this.show();
-    }
-    this.backHandler = BackHandler.addEventListener(HARDWARE_BACK_PRESS_EVENT, this.onHardwareBackPress);
-  }
-
-  componentDidUpdate(prevProps: ModalProps) {
-    if (this.props.visible !== prevProps.visible) {
-      if (this.props.visible) {
-        this.show();
-        return;
-      }
-      this.dismiss();
-    }
-  }
-
-  componentWillUnmount() {
-    this.backHandler?.remove();
-  }
-
-  onHardwareBackPress = (): boolean => (this.props.onHardwareBackPress ? this.props.onHardwareBackPress() : false);
-
-  get pointerEvents(): "auto" | "none" {
-    const { overlayPointerEvents } = this.props;
-    const { modalState } = this.state;
-    if (overlayPointerEvents) {
-      return overlayPointerEvents;
-    }
-    return modalState === MODAL_OPENED ? "auto" : "none";
-  }
-
-  get modalSize(): any {
-    const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
-    let { width, height } = this.props;
-    if (width && width > 0.0 && width <= 1.0) {
-      width *= screenWidth;
-    }
-    if (height && height > 0.0 && height <= 1.0) {
-      height *= screenHeight;
-    }
-    return { width, height };
-  }
-
-  show(): void {
-    this.setState({ modalState: MODAL_OPENING }, () => {
-      this.state.modalAnimation.in(() => {
-        this.setState({ modalState: MODAL_OPENED }, this.props.onShow);
-      });
-    });
-  }
-
-  dismiss(): void {
-    this.setState({ modalState: MODAL_CLOSING }, () => {
-      if (this.isSwipingOut) {
-        this.setState({ modalState: MODAL_CLOSED }, this.props.onDismiss);
-        return;
-      }
-      this.state.modalAnimation.out(() => {
-        this.setState({ modalState: MODAL_CLOSED }, this.props.onDismiss);
-      });
-    });
-  }
-
-  handleMove = (event: any): void => {
-    // prevent flashing when modal is closing and onMove callback invoked
-    if (this.state.modalState === MODAL_CLOSING) {
-      return;
-    }
-    if (!this.lastSwipeEvent) {
-      this.lastSwipeEvent = event;
-    }
-    let newOpacity;
-    const opacity = this.props.overlayOpacity ?? 0;
-    if (Math.abs(event.axis.y)) {
-      const lastAxis = Math.abs(this.lastSwipeEvent.layout.y);
-      const currAxis = Math.abs(event.axis.y);
-      newOpacity = opacity - (opacity * currAxis) / (Dimensions.get("window").height - lastAxis);
-    } else {
-      const lastAxis = Math.abs(this.lastSwipeEvent.layout.x);
-      const currAxis = Math.abs(event.axis.x);
-      newOpacity = opacity - (opacity * currAxis) / (Dimensions.get("window").width - lastAxis);
-    }
-    this.backdrop?.setOpacity(newOpacity);
-  };
-
-  handleSwipingOut = (event: any) => {
-    this.isSwipingOut = true;
-    this.props.onSwipingOut?.(event);
-  };
-
-  render() {
-    const { modalState, modalAnimation } = this.state;
+const BaseModal = memo(
+  forwardRef((props: ModalProps, ref) => {
     const {
-      rounded,
-      modalTitle,
-      children,
-      onTouchOutside,
-      hasOverlay,
-      modalStyle,
-      animationDuration,
-      overlayOpacity,
-      useNativeDriver,
-      overlayBackgroundColor,
-      style,
-      footer,
-      onSwiping,
-      onSwipeRelease,
+      rounded = true,
+      modalTitle = null,
+      visible = false,
+      style = null,
+      animationDuration = DEFAULT_ANIMATION_DURATION,
+      animationDurationIn,
+      animationDurationOut,
+      modalStyle = null,
+      width: propWidth = null,
+      height: propHeight = null,
+      onTouchOutside = () => {},
+      onHardwareBackPress: propOnHardwareBackPress = () => false,
+      hasOverlay = true,
+      overlayOpacity = 0.5,
+      overlayPointerEvents = null,
+      overlayBackgroundColor = '#000',
+      overlayAnimationDelay = 250,
+      onShow = () => {},
+      onDismiss = () => {},
+      footer = null,
+      onMove = () => {},
+      onSwiping = () => {},
+      onSwipeRelease = () => {},
+      onSwipingOut: propOnSwipingOut = () => {},
       onSwipeOut,
       swipeDirection,
       swipeThreshold,
-      useBlurView,
-      blurProps,
-      isDelay,
-    } = this.props;
+      useNativeDriver = true,
+      isDelay = false,
+      children,
+      modalAnimation: propModalAnimation,
+    } = props;
 
-    const overlayVisible = hasOverlay && [MODAL_OPENING, MODAL_OPENED].includes(modalState);
-    const round = rounded ? styles.round : null;
-    const hidden = modalState === MODAL_CLOSED && styles.hidden;
+    const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+
+    const [modalState, setModalState] = useState<ModalState>(MODAL_CLOSED);
+
+    // Instances that don't need re-renders but need to persist
+    const modalAnimation = useRef(
+      propModalAnimation ||
+        new FadeAnimation({
+          animationDuration: animationDuration || DEFAULT_ANIMATION_DURATION,
+        }),
+    ).current;
+
+    const backdropRef = useRef<any>(null);
+    const closeTimerRef = useRef<any>(null);
+    const lastSwipeEventRef = useRef<any | null>(null);
+    const isSwipingOutRef = useRef<boolean>(false);
+
+    const onHardwareBackPress = useCallback((): boolean => {
+      return propOnHardwareBackPress ? propOnHardwareBackPress() : false;
+    }, [propOnHardwareBackPress]);
+
+    const show = useCallback((): void => {
+      clearTimeout(closeTimerRef.current);
+      setModalState(MODAL_OPENING);
+      modalAnimation.in(() => {
+        setModalState(MODAL_OPENED);
+        onShow?.();
+      }, animationDurationIn || animationDuration);
+    }, [modalAnimation, onShow, animationDurationIn, animationDuration]);
+
+    const dismiss = useCallback((): void => {
+      const duration = animationDurationOut || animationDuration;
+      setModalState(MODAL_CLOSING);
+
+      const delay = hasOverlay ? (overlayAnimationDelay || 0) + (duration || 0) : 0;
+
+      const finishDismiss = () => {
+        if (delay > 0) {
+          closeTimerRef.current = setTimeout(() => {
+            setModalState(MODAL_CLOSED);
+            onDismiss?.();
+          }, delay);
+        } else {
+          setModalState(MODAL_CLOSED);
+          onDismiss?.();
+        }
+      };
+
+      if (isSwipingOutRef.current) {
+        finishDismiss();
+        return;
+      }
+
+      modalAnimation.out(finishDismiss, duration);
+    }, [modalAnimation, onDismiss, animationDurationOut, animationDuration, hasOverlay, overlayAnimationDelay]);
+
+    useImperativeHandle(ref, () => ({
+      show,
+      dismiss,
+    }));
+
+    useEffect(() => {
+      const backHandler = BackHandler.addEventListener(HARDWARE_BACK_PRESS_EVENT, onHardwareBackPress);
+      return () => {
+        backHandler.remove();
+        clearTimeout(closeTimerRef.current);
+      };
+    }, [onHardwareBackPress]);
+
+    useEffect(() => {
+      if (visible && modalState === MODAL_CLOSED) {
+        show();
+      } else if (!visible && (modalState === MODAL_OPENED || modalState === MODAL_OPENING)) {
+        dismiss();
+      }
+    }, [visible, modalState, show, dismiss]);
+
+    const pointerEvents = useMemo(() => {
+      if (overlayPointerEvents) {
+        return overlayPointerEvents;
+      }
+      return modalState === MODAL_OPENED ? 'auto' : 'none';
+    }, [overlayPointerEvents, modalState]);
+
+    const modalSizeStyle = useMemo(() => {
+      let w = propWidth;
+      let h = propHeight;
+      if (w && w > 0.0 && w <= 1.0) {
+        w *= screenWidth;
+      }
+      if (h && h > 0.0 && h <= 1.0) {
+        h *= screenHeight;
+      }
+      return { width: w ?? undefined, height: h ?? undefined };
+    }, [propWidth, propHeight, screenWidth, screenHeight]);
+
+    const handleMove = useCallback(
+      (event: any): void => {
+        if (modalState === MODAL_CLOSING) {
+          return;
+        }
+        if (!lastSwipeEventRef.current) {
+          lastSwipeEventRef.current = event;
+        }
+        let newOpacity;
+        const opacity = overlayOpacity ?? 0;
+        if (Math.abs(event.axis.y)) {
+          const lastAxis = Math.abs(lastSwipeEventRef.current.layout.y);
+          const currAxis = Math.abs(event.axis.y);
+          newOpacity = opacity - (opacity * currAxis) / (screenHeight - lastAxis);
+        } else {
+          const lastAxis = Math.abs(lastSwipeEventRef.current.layout.x);
+          const currAxis = Math.abs(event.axis.x);
+          newOpacity = opacity - (opacity * currAxis) / (screenWidth - lastAxis);
+        }
+        backdropRef.current?.setOpacity(newOpacity);
+        onMove?.(event);
+      },
+      [modalState, overlayOpacity, screenWidth, screenHeight, onMove],
+    );
+
+    const handleSwipingOut = useCallback(
+      (event: any) => {
+        isSwipingOutRef.current = true;
+        propOnSwipingOut?.(event);
+      },
+      [propOnSwipingOut],
+    );
+
+    const overlayVisible = hasOverlay && (modalState === MODAL_OPENING || modalState === MODAL_OPENED);
+    const currentOverlayDuration =
+      modalState === MODAL_CLOSING
+        ? animationDurationOut || animationDuration
+        : animationDurationIn || animationDuration;
+
+    const roundStyle = rounded ? styles.round : null;
+    const hiddenStyle = modalState === MODAL_CLOSED ? styles.hidden : null;
+
+    const draggableViewStyle = useMemo(() => StyleSheet.flatten([styles.draggableView, style]), [style]);
+    const modalViewStyle = useMemo(
+      () => [styles.modal, roundStyle, modalSizeStyle, modalStyle, modalAnimation.getAnimations()],
+      [roundStyle, modalSizeStyle, modalStyle, modalAnimation],
+    );
+
+    const renderDraggableContent = useCallback(
+      ({ pan, onLayout }: any) => (
+        <Fragment>
+          <Backdrop
+            ref={backdropRef}
+            pointerEvents={pointerEvents}
+            visible={overlayVisible}
+            onPress={onTouchOutside}
+            backgroundColor={overlayBackgroundColor}
+            opacity={overlayOpacity}
+            animationDuration={currentOverlayDuration}
+            animationDelay={overlayAnimationDelay}
+            useNativeDriver={useNativeDriver}
+          />
+          <Animated.View style={pan.getLayout()} onLayout={onLayout}>
+            <Animated.View style={modalViewStyle}>
+              {modalTitle}
+              {isDelay ? (modalState === MODAL_OPENED ? children : null) : children}
+              {footer}
+            </Animated.View>
+          </Animated.View>
+        </Fragment>
+      ),
+      [
+        pointerEvents,
+        overlayVisible,
+        onTouchOutside,
+        overlayBackgroundColor,
+        overlayOpacity,
+        currentOverlayDuration,
+        overlayAnimationDelay,
+        useNativeDriver,
+        modalViewStyle,
+        modalTitle,
+        isDelay,
+        modalState,
+        children,
+        footer,
+      ],
+    );
 
     return (
       <ModalContext.Provider
         value={{
           hasTitle: Boolean(modalTitle),
           hasFooter: Boolean(footer),
-        }}
-      >
-        <View pointerEvents={this.isSwipingOut ? "none" : "auto"} style={[styles.container, hidden]}>
+        }}>
+        <View pointerEvents={isSwipingOutRef.current ? 'none' : 'auto'} style={[styles.container, hiddenStyle]}>
           <DraggableView
-            style={StyleSheet.flatten([styles.draggableView, style])}
-            onMove={this.handleMove}
+            style={draggableViewStyle}
+            onMove={handleMove}
             onSwiping={onSwiping}
             onRelease={onSwipeRelease}
-            onSwipingOut={this.handleSwipingOut}
+            onSwipingOut={handleSwipingOut}
             onSwipeOut={onSwipeOut}
             swipeDirection={swipeDirection}
-            swipeThreshold={swipeThreshold}
-          >
-            {({ pan, onLayout }) => (
-              <Fragment>
-                <Backdrop
-                  ref={(ref) => {
-                    this.backdrop = ref;
-                  }}
-                  pointerEvents={this.pointerEvents}
-                  visible={overlayVisible}
-                  onPress={onTouchOutside}
-                  backgroundColor={overlayBackgroundColor}
-                  opacity={overlayOpacity}
-                  animationDuration={animationDuration}
-                  useNativeDriver={useNativeDriver}
-                  useBlurView={useBlurView}
-                  blurProps={blurProps}
-                />
-                <Animated.View style={pan.getLayout()} onLayout={onLayout}>
-                  <Animated.View style={[styles.modal, round, this.modalSize, modalStyle, modalAnimation.getAnimations()]}>
-                    {modalTitle}
-                    {isDelay ? (modalState === MODAL_OPENED ? children : null) : children}
-                    {footer}
-                  </Animated.View>
-                </Animated.View>
-              </Fragment>
-            )}
+            swipeThreshold={swipeThreshold}>
+            {renderDraggableContent}
           </DraggableView>
         </View>
       </ModalContext.Provider>
     );
-  }
-}
+  }),
+);
+
+BaseModal.displayName = 'BaseModal';
 
 export default BaseModal;
