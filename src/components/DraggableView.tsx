@@ -11,6 +11,7 @@ type Props = {
   onSwipeOut?: (event: DragEvent) => void;
   swipeThreshold?: number;
   swipeDirection?: SwipeDirection | Array<SwipeDirection>;
+  pointerEvents?: 'auto' | 'none' | 'box-none' | 'box-only';
   children: (args: { onLayout: (event: any) => void; pan: Animated.ValueXY }) => React.ReactNode;
 };
 
@@ -24,6 +25,7 @@ const DraggableView = memo((props: Props) => {
     onRelease = () => {},
     swipeThreshold = 100,
     swipeDirection = [],
+    pointerEvents = 'auto',
     children: renderContent,
   } = props;
 
@@ -124,13 +126,9 @@ const DraggableView = memo((props: Props) => {
     () =>
       PanResponder.create({
         onStartShouldSetPanResponder: () =>
-          propsRef.current.swipeDirection
-            ? ([] as SwipeDirection[]).concat(propsRef.current.swipeDirection).length > 0
-            : false,
+          allowedDirections.length > 0,
         onMoveShouldSetPanResponder: (_, gestureState) =>
-          (propsRef.current.swipeDirection
-            ? ([] as SwipeDirection[]).concat(propsRef.current.swipeDirection).length > 0
-            : false) &&
+          allowedDirections.length > 0 &&
           (gestureState.dx !== 0 || gestureState.dy !== 0),
         onPanResponderMove: (event, gestureState) => {
           const isVertical = (d: SwipeDirection | null) => d === 'up' || d === 'down';
@@ -162,7 +160,7 @@ const DraggableView = memo((props: Props) => {
         onPanResponderRelease: () => {
           pan.flattenOffset();
           const event = createDragEvent();
-          const threshold = propsRef.current.swipeThreshold ?? 0;
+          const threshold = propsRef.current.swipeThreshold ?? 100;
 
           if (
             (propsRef.current.onSwipeOut && Math.abs(panValueRef.current.y) > threshold) ||
@@ -204,7 +202,7 @@ const DraggableView = memo((props: Props) => {
   });
 
   return (
-    <Animated.View {...panResponder.panHandlers} style={style}>
+    <Animated.View {...panResponder.panHandlers} style={style} pointerEvents={pointerEvents}>
       {content}
     </Animated.View>
   );

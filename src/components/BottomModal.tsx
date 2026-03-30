@@ -14,19 +14,27 @@ const styles = StyleSheet.create({
   },
 });
 
-const BottomModal = ({ style, modalStyle, ...restProps }: ModalProps) => (
-  <BaseModal
-    modalAnimation={
+const BottomModal = (props: ModalProps) => {
+  const { style, modalStyle, ...restProps } = props;
+
+  const modalAnimation = React.useMemo(
+    () =>
       new SlideAnimation({
         slideFrom: 'bottom',
-      })
-    }
-    {...restProps}
-    style={StyleSheet.flatten([styles.container, style])}
-    modalStyle={StyleSheet.flatten([styles.modal, modalStyle])}
-    width={1}
-    swipeDirection="down"
-  />
-);
+      }),
+    [],
+  );
+
+  return (
+    <BaseModal
+      modalAnimation={modalAnimation}
+      {...restProps}
+      style={StyleSheet.flatten([styles.container, style])}
+      modalStyle={StyleSheet.flatten([styles.modal, modalStyle])}
+      width={1}
+      swipeDirection="down"
+    />
+  );
+};
 
 export default BottomModal;

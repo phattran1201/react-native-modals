@@ -1,7 +1,12 @@
 import { Animated, Dimensions } from 'react-native';
 import Animation from './Animation';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+let { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+Dimensions.addEventListener('change', ({ window }) => {
+  SCREEN_WIDTH = window.width;
+  SCREEN_HEIGHT = window.height;
+});
 
 export type SlideFrom = 'top' | 'bottom' | 'left' | 'right';
 

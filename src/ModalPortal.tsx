@@ -40,13 +40,21 @@ class ModalPortal extends React.Component<{}, { stack: StackItem[] }> {
   }
 
   get current() {
-    if (this.state.stack.length) {
-      return this.state.stack[this.state.stack.length - 1].key;
+    const { stack } = this.state;
+    for (let i = stack.length - 1; i >= 0; i -= 1) {
+      if (stack[i].visible) {
+        return stack[i].key;
+      }
     }
     return null;
   }
 
-  generateKey = () => `modal-${this.id++}`;
+  static counter = 0;
+
+  generateKey = () => {
+    ModalPortal.counter += 1;
+    return `modal-${ModalPortal.counter}`;
+  };
 
   getIndex = (key: string) => this.state.stack.findIndex((i) => i.key === key);
 
@@ -57,12 +65,23 @@ class ModalPortal extends React.Component<{}, { stack: StackItem[] }> {
 
   show = (props: ModalProps & { key?: string; type?: 'modal' | 'bottomModal' }) => {
     const mergedProps = this.getProps(props);
-    this.setState(({ stack }) => ({ stack: stack.concat(mergedProps) }));
-    DeviceEventEmitter.emit('ModalPortal', {
-      type: 'show',
-      key: mergedProps.key,
-      stack: this.state.stack,
-    } as EmitModalPortal);
+    const index = this.getIndex(mergedProps.key);
+
+    if (index > -1) {
+      this.update(mergedProps.key, mergedProps);
+      return mergedProps.key;
+    }
+
+    this.setState(
+      ({ stack }) => ({ stack: stack.concat(mergedProps) }),
+      () => {
+        DeviceEventEmitter.emit('ModalPortal', {
+          type: 'show',
+          key: mergedProps.key,
+          stack: this.state.stack,
+        } as EmitModalPortal);
+      },
+    );
     return mergedProps.key;
   };
 
@@ -70,34 +89,41 @@ class ModalPortal extends React.Component<{}, { stack: StackItem[] }> {
     const mergedProps = this.getProps({ ...props, key });
     this.setState(({ stack }) => {
       const index = this.getIndex(key);
-      if (index >= 0) {
-        stack[index] = { ...stack[index], ...mergedProps };
-        DeviceEventEmitter.emit('ModalPortal', {
-          type: mergedProps.visible ? 'update' : 'dismiss',
-          key,
-          stack,
-        } as EmitModalPortal);
+      if (index === -1) {
+        return null;
       }
-      return { stack };
+      const newStack = [...stack];
+      newStack[index] = { ...newStack[index], ...mergedProps };
+
+      DeviceEventEmitter.emit('ModalPortal', {
+        type: mergedProps.visible ? 'update' : 'dismiss',
+        key,
+        stack: newStack,
+      } as EmitModalPortal);
+
+      return { stack: newStack };
     });
   };
 
   dismiss = (key: string | null = this.current) => {
     if (!key) return;
     const idx = this.getIndex(key);
-    if (idx < 0) return;
+    if (idx === -1) return;
     const props = { ...this.state.stack[idx], visible: false };
     this.update(key, props);
   };
 
   dismissAll = () => {
-    this.state.stack.forEach(({ key }) => this.dismiss(key));
+    this.setState(({ stack }) => {
+      const newStack = stack.map((item) => ({ ...item, visible: false }));
+      return { stack: newStack };
+    });
   };
 
   dismissHandler = (key: string) => {
     // dismiss hander: which will remove data from stack and call onDismissed callback
     const idx = this.getIndex(key);
-    if (idx < 0) return;
+    if (idx === -1) return;
     const { onDismiss = () => {} } = this.state.stack[idx];
     this.setState(({ stack }) => ({ stack: stack.filter((i) => i.key !== key) }), onDismiss);
   };
@@ -112,9 +138,7 @@ class ModalPortal extends React.Component<{}, { stack: StackItem[] }> {
   };
 
   render() {
-    return this.state?.stack
-      ?.filter((item, index, self) => index === self?.findIndex((t) => t?.key === item?.key))
-      ?.map(this.renderModal);
+    return this.state?.stack?.map(this.renderModal);
   }
 }
 

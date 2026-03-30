@@ -36,10 +36,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   hidden: {
-    top: -10000,
-    left: 0,
-    height: 0,
-    width: 0,
+    display: 'none',
   },
   round: {
     borderRadius: 8,
@@ -111,6 +108,7 @@ const BaseModal = memo(
     }, [propOnHardwareBackPress]);
 
     const show = useCallback((): void => {
+      isSwipingOutRef.current = false;
       clearTimeout(closeTimerRef.current);
       setModalState(MODAL_OPENING);
       modalAnimation.in(() => {
@@ -121,9 +119,10 @@ const BaseModal = memo(
 
     const dismiss = useCallback((): void => {
       const duration = animationDurationOut || animationDuration;
+      clearTimeout(closeTimerRef.current);
       setModalState(MODAL_CLOSING);
 
-      const delay = hasOverlay ? (overlayAnimationDelay || 0) + (duration || 0) : 0;
+      const delay = hasOverlay ? overlayAnimationDelay || 0 : 0;
 
       const finishDismiss = () => {
         if (delay > 0) {
@@ -159,18 +158,24 @@ const BaseModal = memo(
     }, [onHardwareBackPress]);
 
     useEffect(() => {
-      if (visible && modalState === MODAL_CLOSED) {
-        show();
-      } else if (!visible && (modalState === MODAL_OPENED || modalState === MODAL_OPENING)) {
-        dismiss();
+      if (visible) {
+        if (modalState === MODAL_CLOSED || modalState === MODAL_CLOSING) {
+          show();
+        }
+      } else {
+        if (modalState === MODAL_OPENED || modalState === MODAL_OPENING) {
+          dismiss();
+        } else if (modalState === MODAL_CLOSED) {
+          onDismiss?.();
+        }
       }
-    }, [visible, modalState, show, dismiss]);
+    }, [visible, modalState, show, dismiss, onDismiss]);
 
     const pointerEvents = useMemo(() => {
       if (overlayPointerEvents) {
         return overlayPointerEvents;
       }
-      return modalState === MODAL_OPENED ? 'auto' : 'none';
+      return modalState === MODAL_OPENED || modalState === MODAL_OPENING ? 'auto' : 'none';
     }, [overlayPointerEvents, modalState]);
 
     const modalSizeStyle = useMemo(() => {
@@ -280,9 +285,13 @@ const BaseModal = memo(
           hasTitle: Boolean(modalTitle),
           hasFooter: Boolean(footer),
         }}>
-        <View pointerEvents={isSwipingOutRef.current ? 'none' : 'auto'} style={[styles.container, hiddenStyle]}>
+        <View
+          pointerEvents={modalState === MODAL_CLOSED || isSwipingOutRef.current ? 'none' : 'box-none'}
+          style={[styles.container, hiddenStyle]}
+        >
           <DraggableView
             style={draggableViewStyle}
+            pointerEvents={pointerEvents}
             onMove={handleMove}
             onSwiping={onSwiping}
             onRelease={onSwipeRelease}
