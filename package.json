@@ -1,6 +1,6 @@
 {
   "name": "@haroldtran/react-native-modals",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "React Native Modals Library for IOS & Android.",
   "keywords": [
     "modal",
@@ -34,7 +34,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
-    "release": "npm publish && git push --follow-tags && gh release create v$(node -p \"require('./package.json').version\") --generate-notes",
+    "release": "npm login && npm publish && git push --follow-tags && gh release create v$(node -p \"require('./package.json').version\") --generate-notes",
     "test": "echo \"Error: no test specified\" && exit 1",
     "tsc": "tsc --noEmit"
   },

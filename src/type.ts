@@ -8,7 +8,7 @@ export type StackItem = ModalProps & {
 };
 
 export type EmitModalPortal = {
-  type: 'show' | 'update' | 'dismiss';
+  type: 'show' | 'update' | 'dismiss' | 'dismissAll';
   key?: string;
   stack: StackItem[];
 };
@@ -63,6 +63,7 @@ export type ModalProps = {
   useNativeDriver?: boolean;
 
   isDelay?: boolean;
+  type?: 'modal' | 'bottomModal';
 };
 
 export type ModalFooterProps = {
