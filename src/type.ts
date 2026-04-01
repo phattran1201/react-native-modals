@@ -64,6 +64,7 @@ export type ModalProps = {
 
   isDelay?: boolean;
   type?: 'modal' | 'bottomModal';
+  destroyOnDismiss?: boolean;
 };
 
 export type ModalFooterProps = {

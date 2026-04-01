@@ -103,11 +103,17 @@ ModalPortal.update(id, {
   ),
 });
 
-// Dismiss a specific modal
+// Dismiss a specific modal (plays out-animation and hides)
 ModalPortal.dismiss(id);
 
 // Dismiss all open modals
 ModalPortal.dismissAll();
+
+// Forcefully unmount a modal from memory (useful if using destroyOnDismiss: false)
+ModalPortal.destroy(id);
+
+// Forcefully unmount all modals from memory
+ModalPortal.destroyAll();
 ```
 
 ---

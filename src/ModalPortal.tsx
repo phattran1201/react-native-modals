@@ -47,6 +47,14 @@ export default class ModalPortal extends React.Component<{}, { stack: StackItem[
     modal?.dismissAll();
   }
 
+  static destroy(key?: string) {
+    modal?.destroy(key);
+  }
+
+  static destroyAll() {
+    modal?.destroyAll();
+  }
+
   get current() {
     const { stack } = this.state;
     for (let i = stack.length - 1; i >= 0; i -= 1) {
@@ -145,17 +153,33 @@ export default class ModalPortal extends React.Component<{}, { stack: StackItem[
     );
   };
 
+  destroy = (key: string | null = this.current) => {
+    if (!key) return;
+    this.setState(
+      ({ stack }) => ({ stack: stack.filter((i) => i.key !== key) }),
+      () => {
+        this.dismissHandlers.delete(key);
+      },
+    );
+  };
+
+  destroyAll = () => {
+    this.setState({ stack: [] }, () => {
+      this.dismissHandlers.clear();
+    });
+  };
+
   dismissHandler = (key: string) => {
     const item = this.state.stack.find((i) => i.key === key);
     if (!item) return;
 
-    this.setState(
-      ({ stack }) => ({ stack: stack.filter((i) => i.key !== key) }),
-      () => {
-        item.onDismiss?.();
-        this.dismissHandlers.delete(key);
-      },
-    );
+    if (item.destroyOnDismiss === false) {
+      item.onDismiss?.();
+      return;
+    }
+
+    this.destroy(key);
+    item.onDismiss?.();
   };
 
   getStableDismissHandler = (key: string) => {
